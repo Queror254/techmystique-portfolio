@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Developer Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+      :root, [data-theme="default"] {
+        --bg-primary: #1e1e1e;
+        --bg-secondary: #252526;
+        --bg-tertiary: #3c3c3c;
+        --bg-tertiary-alpha: rgba(60, 60, 60, 0.5);
+        --border-primary: #333333;
+        --border-secondary: #444444;
+        --text-bright: #ffffff;
+        --text-primary: #d4d4d4;
+        --text-secondary: #a0a0a0;
+        --text-muted: #666666;
+        --accent-cyan: #22d3ee;
+        --accent-green: #34d399;
+        --accent-green-light: #86efac;
+        --accent-purple: #c084fc;
+        --accent-yellow: #facc15;
+        --accent-orange: #fb923c;
+        --accent-red: #f87171;
+        --button-primary-bg: #16a34a;
+        --button-primary-hover-bg: #22c55e;
+        --scrollbar-track: #1e1e1e;
+        --scrollbar-thumb: #4a4a4a;
+        --scrollbar-thumb-border: #1e1e1e;
+      }
+      [data-theme="solarized-light"] {
+        --bg-primary: #fdf6e3;
+        --bg-secondary: #f0e5c6;
+        --bg-tertiary: #eee8d5;
+        --bg-tertiary-alpha: rgba(238, 232, 213, 0.5);
+        --border-primary: #dcd3b8;
+        --border-secondary: #c9c0a6;
+        --text-bright: #002b36;
+        --text-primary: #586e75;
+        --text-secondary: #839496;
+        --text-muted: #93a1a1;
+        --accent-cyan: #2aa198;
+        --accent-green: #859900;
+        --accent-green-light: #728500;
+        --accent-purple: #6c71c4;
+        --accent-yellow: #b58900;
+        --accent-orange: #cb4b16;
+        --accent-red: #dc322f;
+        --button-primary-bg: #2aa198;
+        --button-primary-hover-bg: #2dbeb2;
+        --scrollbar-track: #fdf6e3;
+        --scrollbar-thumb: #cccccc;
+        --scrollbar-thumb-border: #fdf6e3;
+      }
+       [data-theme="matrix"] {
+        --bg-primary: #000000;
+        --bg-secondary: #020f02;
+        --bg-tertiary: #031f03;
+        --bg-tertiary-alpha: rgba(3, 31, 3, 0.5);
+        --border-primary: #0a2b0a;
+        --border-secondary: #0f3d0f;
+        --text-bright: #ffffff;
+        --text-primary: #39ff14;
+        --text-secondary: #28b40e;
+        --text-muted: #1a7509;
+        --accent-cyan: #66ff33;
+        --accent-green: #39ff14;
+        --accent-green-light: #99ff66;
+        --accent-purple: #9dff9d;
+        --accent-yellow: #ccff99;
+        --accent-orange: #66ff33;
+        --accent-red: #ff3333;
+        --button-primary-bg: #28b40e;
+        --button-primary-hover-bg: #39ff14;
+        --scrollbar-track: #000000;
+        --scrollbar-thumb: #1a7509;
+        --scrollbar-thumb-border: #000000;
+      }
+      [data-theme="nord"] {
+        --bg-primary: #2E3440;
+        --bg-secondary: #3B4252;
+        --bg-tertiary: #434C5E;
+        --bg-tertiary-alpha: rgba(67, 76, 94, 0.5);
+        --border-primary: #4C566A;
+        --border-secondary: #4C566A;
+        --text-bright: #ECEFF4;
+        --text-primary: #D8DEE9;
+        --text-secondary: #E5E9F0;
+        --text-muted: #81A1C1;
+        --accent-cyan: #88C0D0;
+        --accent-green: #A3BE8C;
+        --accent-green-light: #A3BE8C;
+        --accent-purple: #B48EAD;
+        --accent-yellow: #EBCB8B;
+        --accent-orange: #D08770;
+        --accent-red: #BF616A;
+        --button-primary-bg: #88C0D0;
+        --button-primary-hover-bg: #8FBCBB;
+        --scrollbar-track: #2E3440;
+        --scrollbar-thumb: #4C566A;
+        --scrollbar-thumb-border: #2E3440;
+      }
+      [data-theme="gruvbox-dark"] {
+        --bg-primary: #282828;
+        --bg-secondary: #3c3836;
+        --bg-tertiary: #504945;
+        --bg-tertiary-alpha: rgba(80, 73, 69, 0.5);
+        --border-primary: #665c54;
+        --border-secondary: #7c6f64;
+        --text-bright: #ebdbb2;
+        --text-primary: #d5c4a1;
+        --text-secondary: #bdae93;
+        --text-muted: #928374;
+        --accent-cyan: #83a598;
+        --accent-green: #b8bb26;
+        --accent-green-light: #b8bb26;
+        --accent-purple: #d3869b;
+        --accent-yellow: #fabd2f;
+        --accent-orange: #fe8019;
+        --accent-red: #fb4934;
+        --button-primary-bg: #83a598;
+        --button-primary-hover-bg: #8ec07c;
+        --scrollbar-track: #282828;
+        --scrollbar-thumb: #665c54;
+        --scrollbar-thumb-border: #282828;
+      }
+      body {
+        font-family: 'Fira Code', monospace;
+        background-color: var(--bg-primary);
+        color: var(--text-primary);
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      .terminal-scrollbar::-webkit-scrollbar {
+        width: 8px;
+      }
+      .terminal-scrollbar::-webkit-scrollbar-track {
+        background: var(--scrollbar-track);
+      }
+      .terminal-scrollbar::-webkit-scrollbar-thumb {
+        background-color: var(--scrollbar-thumb);
+        border-radius: 4px;
+        border: 2px solid var(--scrollbar-thumb-border);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.1.0/",
+    "react": "https://esm.sh/react@^19.1.0",
+    "react-dom/": "https://esm.sh/react-dom@^19.1.0/",
+    "@google/genai": "https://esm.sh/@google/genai@0.14.0",
+    "react-markdown": "https://esm.sh/react-markdown@9.0.1",
+    "remark-gfm": "https://esm.sh/remark-gfm@4.0.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body data-theme="default">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>
