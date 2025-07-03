@@ -12,6 +12,17 @@ const BlinkingCursor: React.FC = () => (
     <span className="w-2.5 h-5 bg-[var(--accent-green)] inline-block animate-pulse"></span>
 );
 
+const TerminalPrompt: React.FC = () => (
+    <>
+      <span className="text-[var(--accent-cyan)] hidden sm:inline">user@portfolio</span>
+      <span className="text-[var(--text-secondary)] hidden sm:inline">:</span>
+      <span className="text-[var(--accent-purple)]">~</span>
+      <span className="text-[var(--text-secondary)] sm:hidden"> </span>
+      <span className="text-[var(--text-secondary)]">$</span>
+    </>
+);
+
+
 const Terminal: React.FC<TerminalProps> = ({ history, onCommand, isProcessing, prompt }) => {
   const [inputValue, setInputValue] = useState('');
   const terminalEndRef = useRef<HTMLDivElement>(null);
@@ -31,6 +42,7 @@ const Terminal: React.FC<TerminalProps> = ({ history, onCommand, isProcessing, p
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if(isProcessing) return;
     onCommand(inputValue);
     setInputValue('');
   };
@@ -40,53 +52,51 @@ const Terminal: React.FC<TerminalProps> = ({ history, onCommand, isProcessing, p
       className="flex-1 p-4 text-base leading-relaxed overflow-y-auto terminal-scrollbar"
       onClick={() => inputRef.current?.focus()}
     >
-      {history.map((item, index) => (
-        item.command !== 'init' && (
+      {history.map((item, index) => {
+        if (item.command === 'init') {
+            return <div key={index} className="mt-1 mb-4">{item.output}</div>
+        }
+        return (
           <div key={index}>
-            <div className="flex items-center">
-              <span className="text-[var(--accent-cyan)]">user@portfolio</span>
-              <span className="text-[var(--text-secondary)]">:</span>
-              <span className="text-[var(--accent-purple)]">~</span>
-              <span className="text-[var(--text-secondary)]">$</span>
-              <span className="ml-2 text-[var(--text-bright)]">{item.command}</span>
+            <div className="flex flex-wrap items-baseline">
+                <div className="flex-shrink-0 mr-2">
+                    <TerminalPrompt />
+                </div>
+                <span className="text-[var(--text-bright)] break-all">{item.command}</span>
             </div>
-            <div className="mt-1 mb-4">
-              {item.output}
-            </div>
+            {item.output !== null ? (
+                <div className="mt-1 mb-4">{item.output}</div>
+            ) : (
+                isProcessing && index === history.length - 1 && <div className="mt-1 mb-4 h-6"></div>
+            )}
           </div>
         )
-      ))}
+      })}
 
-        {history.length > 0 && history[0].command === 'init' && (
-             <div className="mt-1 mb-4">{history[0].output}</div>
-        )}
-
-
-      <form onSubmit={handleFormSubmit}>
-        <div className="flex items-center">
-            {prompt || (
-              <>
-                <span className="text-[var(--accent-cyan)]">user@portfolio</span>
-                <span className="text-[var(--text-secondary)]">:</span>
-                <span className="text-[var(--accent-purple)]">~</span>
-                <span className="text-[var(--text-secondary)]">$</span>
-              </>
-            )}
-          <input
-            ref={inputRef}
-            type="text"
-            id="terminal-input"
-            value={inputValue}
-            onChange={handleInputChange}
-            className={`flex-1 ml-2 bg-transparent border-none outline-none text-[var(--text-bright)] ${prompt ? '' : 'pl-2'}`}
-            autoFocus
-            disabled={isProcessing}
-            autoComplete="off"
-            aria-label="Terminal input"
-          />
-         {!isProcessing && <BlinkingCursor />}
-        </div>
-      </form>
+      {!isProcessing && (
+        <form onSubmit={handleFormSubmit}>
+          <div className="flex items-center">
+              {prompt || (
+                <div className="flex-shrink-0 mr-2">
+                  <TerminalPrompt />
+                </div>
+              )}
+            <input
+              ref={inputRef}
+              type="text"
+              id="terminal-input"
+              value={inputValue}
+              onChange={handleInputChange}
+              className={`flex-1 bg-transparent border-none outline-none text-[var(--text-bright)] w-full`}
+              autoFocus
+              disabled={isProcessing}
+              autoComplete="off"
+              aria-label="Terminal input"
+            />
+          <BlinkingCursor />
+          </div>
+        </form>
+      )}
       <div ref={terminalEndRef} />
     </div>
   );

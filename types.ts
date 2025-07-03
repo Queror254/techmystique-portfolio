@@ -12,3 +12,5 @@ export interface SkillCategory {
   title: string;
   skills: string[];
 }
+
+export type ViewMode = 'terminal' | 'normal' | 'game';

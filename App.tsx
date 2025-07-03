@@ -3,9 +3,6 @@ import React, { useState, useCallback, ReactNode, useEffect, useRef } from 'reac
 import Sidebar from './components/Sidebar';
 import Terminal from './components/Terminal';
 import NormalView from './components/NormalView';
-import ViewModeToggle from './components/ViewModeToggle';
-import ThemeSwitcher from './components/ThemeSwitcher';
-import ProjectModal from './components/ProjectModal';
 import { YOUR_NAME, YOUR_HEADLINE, PROJECTS, THEMES } from './constants';
 import WelcomeOutput from './components/output/WelcomeOutput';
 import HelpOutput from './components/output/HelpOutput';
@@ -16,12 +13,11 @@ import ContactOutput from './components/output/ContactOutput';
 import NotFoundOutput from './components/output/NotFoundOutput';
 import HistoryOutput from './components/output/HistoryOutput';
 import CowsayOutput from './components/output/CowsayOutput';
-import { Project } from './types';
+import { Project, ViewMode } from './types';
 import TopBar from './components/TopBar';
 import AskOutput from './components/output/AskOutput';
 import GameView from './components/GameView';
-
-type ViewMode = 'terminal' | 'normal' | 'game';
+import ProjectModal from './components/ProjectModal';
 
 interface HistoryItem {
   command: string;
@@ -64,6 +60,35 @@ const App: React.FC = () => {
     const savedViewMode = localStorage.getItem('portfolio-view-mode') as ViewMode | null;
     setViewMode(savedViewMode || 'terminal');
   }, []);
+
+  useEffect(() => {
+    let title = `${YOUR_NAME} - Portfolio`;
+    if (viewMode === 'game' && activeGame) {
+        const gameName = activeGame.charAt(0).toUpperCase() + activeGame.slice(1);
+        title = `${gameName} Game | ${YOUR_NAME}`;
+    } else if (viewMode === 'normal') {
+        const visibleSection = Object.keys(sectionRefs).find(key => {
+            const ref = sectionRefs[key as keyof typeof sectionRefs];
+            if (ref.current) {
+                const rect = ref.current.getBoundingClientRect();
+                return rect.top >= 0 && rect.top <= window.innerHeight / 2;
+            }
+            return false;
+        });
+        const sectionTitle = visibleSection ? `${visibleSection.charAt(0).toUpperCase() + visibleSection.slice(1)} | ` : '';
+        title = `${sectionTitle}${YOUR_NAME}`;
+    } else { // terminal view
+        switch(activeCommand) {
+            case 'init': title = `Welcome | ${YOUR_NAME}`; break;
+            case 'about': title = `About Me | ${YOUR_NAME}`; break;
+            case 'projects': title = `My Projects | ${YOUR_NAME}`; break;
+            case 'skills': title = `My Skills | ${YOUR_NAME}`; break;
+            case 'contact': title = `Contact Me | ${YOUR_NAME}`; break;
+            default: title = `Terminal | ${YOUR_NAME}`; break;
+        }
+    }
+    document.title = title;
+  }, [viewMode, activeCommand, activeGame, history]); // Re-check title on history change for normal view scroll
 
   useEffect(() => {
     let newPrompt: ReactNode = null;
@@ -120,17 +145,15 @@ const App: React.FC = () => {
 
   const executeCommand = useCallback((command: string, fromClick: boolean = false) => {
     if (isProcessing) return;
-
     const trimmedCommand = command.trim();
 
+    // --- Contact Form Logic ---
     if (contactFormStep !== 'idle') {
       setIsProcessing(true);
-
       let output: ReactNode;
       let nextStep: 'idle' | 'name' | 'email' | 'message' = contactFormStep;
       let newFormData = { ...contactFormData };
-      
-      const newHistoryItem: HistoryItem = { command: (contactFormStep === 'message' && !trimmedCommand) ? '<empty message>' : trimmedCommand, output: '' };
+      const userInput = (contactFormStep === 'message' && !trimmedCommand) ? '<empty message>' : trimmedCommand;
 
       if (trimmedCommand.toLowerCase() === 'abort') {
         output = <p>Contact process aborted.</p>;
@@ -141,22 +164,19 @@ const App: React.FC = () => {
       } else {
         switch (contactFormStep) {
           case 'name':
-            newFormData.name = trimmedCommand;
-            nextStep = 'email';
+            newFormData.name = trimmedCommand; nextStep = 'email';
             output = <p>Thanks, {trimmedCommand}. What is your email address?</p>;
             break;
           case 'email':
             if (!/^\S+@\S+\.\S+$/.test(trimmedCommand)) {
-                output = <p className="text-[var(--accent-red)]">Please enter a valid email address, or type 'abort' to cancel.</p>;
+              output = <p className="text-[var(--accent-red)]">Please enter a valid email address, or type 'abort' to cancel.</p>;
             } else {
-                newFormData.email = trimmedCommand;
-                nextStep = 'message';
-                output = <p>Got it. Finally, what is your message?</p>;
+              newFormData.email = trimmedCommand; nextStep = 'message';
+              output = <p>Got it. Finally, what is your message?</p>;
             }
             break;
           case 'message':
-            newFormData.message = trimmedCommand;
-            nextStep = 'idle';
+            newFormData.message = trimmedCommand; nextStep = 'idle';
             console.log('New contact submission:', newFormData);
             output = (
               <div className="p-2 rounded-md border border-[var(--accent-green)] bg-[var(--bg-tertiary-alpha)]">
@@ -169,162 +189,113 @@ const App: React.FC = () => {
         }
       }
 
-      newHistoryItem.output = output;
-      setHistory(prev => [...prev, newHistoryItem]);
+      setHistory(prev => [...prev, { command: userInput, output }]);
       setContactFormStep(nextStep);
       setContactFormData(newFormData);
       if (nextStep !== 'idle' || contactFormStep === 'message') {
-          setCommandLog(prev => [...prev, `contact:${contactFormStep}`]);
+        setCommandLog(prev => [...prev, `contact:${contactFormStep}`]);
       }
       setIsProcessing(false);
       return;
     }
     
+    // --- Default Command Logic ---
     if (!trimmedCommand) return;
 
     setIsProcessing(true);
+    setCommandLog(prev => [...prev, trimmedCommand]);
     
-    if (trimmedCommand !== 'clear' && !trimmedCommand.startsWith('message:sent')) {
-        setCommandLog(prev => [...prev, trimmedCommand]);
+    if (!fromClick) {
+        setHistory(prev => [...prev, { command: trimmedCommand, output: null }]);
     }
 
-    const newHistory: HistoryItem[] = fromClick ? [] : [...history, { command: trimmedCommand, output: null }];
-    let output: ReactNode;
-    
-    const args = trimmedCommand.toLowerCase().split(' ');
-    const cmd = args[0];
-
     setTimeout(() => {
+      let output: ReactNode;
       let commandHandled = true;
+      const args = trimmedCommand.toLowerCase().split(' ');
+      const cmd = args[0];
+
       switch (cmd) {
-        case 'help':
-          output = <HelpOutput />;
-          if(fromClick) setView('terminal');
-          break;
+        case 'help': output = <HelpOutput />; break;
         case 'about':
         case 'projects':
         case 'skills':
         case 'contact':
             if (fromClick) {
-                if(isTerminalMode) {
-                    executeCommand(cmd, false);
-                } else {
-                    handleNavigation(cmd);
-                    closeSidebar();
-                }
-                setIsProcessing(false);
-                return;
+                if (isTerminalMode) executeCommand(cmd, false); else handleNavigation(cmd);
+                closeSidebar(); setIsProcessing(false); return;
             }
-             switch(cmd) {
+            switch(cmd) {
                 case 'about': output = <AboutOutput />; break;
                 case 'projects': output = <ProjectsOutput onRunProject={handleRunProject} isTerminalMode={true}/>; break;
                 case 'skills': output = <SkillsOutput />; break;
                 case 'contact':
                     setContactFormStep('name');
-                    output = (
-                        <div>
-                            <p>Happy to connect! Please answer the following questions.</p>
-                            <p>(Type <span className="text-[var(--accent-red)] font-bold">abort</span> at any time to cancel.)</p>
-                            <p className="mt-2 font-bold text-[var(--text-bright)]">What is your name?</p>
-                        </div>
-                    );
+                    output = (<div><p>Happy to connect! Please answer the following questions.</p><p>(Type <span className="text-[var(--accent-red)] font-bold">abort</span> at any time to cancel.)</p><p className="mt-2 font-bold text-[var(--text-bright)]">What is your name?</p></div>);
                     break;
             }
             break;
         case 'clear':
           setHistory([{ command: 'init', output: <WelcomeOutput executeCommand={(cmd) => executeCommand(cmd, true)} /> }]);
-          setActiveCommand('init');
-          setContactFormStep('idle');
-          setIsProcessing(false);
-          return;
-        case 'history':
-            output = <HistoryOutput log={commandLog} />;
-            if(fromClick) setView('terminal');
-            break;
+          setActiveCommand('init'); setContactFormStep('idle'); setIsProcessing(false); return;
+        case 'history': output = <HistoryOutput log={commandLog} />; break;
         case 'cowsay':
             const message = command.substring('cowsay'.length).trim() || 'Moo-ve along!';
-            output = <CowsayOutput message={message} />;
-            if(fromClick) setView('terminal');
-            break;
-        case 'ask':
-            const question = command.substring('ask'.length).trim();
-            output = <AskOutput prompt={question} />;
-            if(fromClick) setView('terminal');
-            break;
+            output = <CowsayOutput message={message} />; break;
+        case 'ask': output = <AskOutput prompt={command.substring('ask'.length).trim()} />; break;
         case 'play':
             const gameName = args[1];
             if (gameName === 'tictactoe') {
-                setView('game');
-                setActiveGame('tictactoe');
+                setView('game'); setActiveGame('tictactoe');
                 output = <p>Launching Tic-Tac-Toe...</p>;
             } else {
-                if(fromClick) setView('terminal');
-                output = <div>
-                    <p>Which game would you like to play?</p>
-                    <p>Available games: <span className="text-[var(--accent-cyan)]">tictactoe</span></p>
-                    <p>Usage: play {'<game_name>'}</p>
-                </div>;
+                output = (<div><p>Which game would you like to play?</p><p>Available games: <span className="text-[var(--accent-cyan)]">tictactoe</span></p><p>Usage: play {'<game_name>'}</p></div>);
             }
             break;
         case 'run':
-            const slug = args[1];
-            const projectToRun = PROJECTS.find(p => p.slug === slug);
+            const projectToRun = PROJECTS.find(p => p.slug === args[1]);
             if (projectToRun) {
                 handleRunProject(projectToRun);
                 output = <p>Launching project: <span className="font-bold text-[var(--accent-green-light)]">{projectToRun.name}</span>...</p>
             } else {
-                output = <p className="text-[var(--accent-red)]">Error: Project '{slug}' not found or has no live demo.</p>
+                output = <p className="text-[var(--accent-red)]">Error: Project '{args[1]}' not found or has no live demo.</p>
             }
-            if(fromClick) setView('terminal');
             break;
         case 'theme':
-            const subCmd = args[1];
-            const themeName = args[2];
+            const subCmd = args[1], themeName = args[2];
             if (subCmd === 'set' && themeName && THEMES.includes(themeName)) {
-                document.body.setAttribute('data-theme', themeName);
-                localStorage.setItem('portfolio-theme', themeName);
+                document.body.setAttribute('data-theme', themeName); localStorage.setItem('portfolio-theme', themeName);
                 output = <p>Theme set to <span className="font-bold text-[var(--accent-cyan)]">{themeName}</span></p>;
             } else if (subCmd === 'list') {
                  output = <div><p>Available themes:</p><ul className="list-disc list-inside">{THEMES.map(t=><li key={t}>{t}</li>)}</ul></div>
-            }
-            else {
+            } else {
                 output = <p className="text-[var(--accent-red)]">Usage: theme [set|list] {'<theme_name>'}</p>;
             }
-            if(fromClick) setView('terminal');
             break;
         case 'view':
-            if (args[1] === 'normal') {
-                setView('normal');
-                output = <p>Switching to normal view...</p>;
-            } else if (args[1] === 'terminal') {
-                setView('terminal');
-                output = <p>Switching to terminal view...</p>;
-            } else {
-                output = <p className="text-[var(--accent-red)]">Usage: view [normal|terminal]</p>;
-            }
+            if (args[1] === 'normal') { setView('normal'); output = <p>Switching to normal view...</p>; }
+            else if (args[1] === 'terminal') { setView('terminal'); output = <p>Switching to terminal view...</p>; }
+            else { output = <p className="text-[var(--accent-red)]">Usage: view [normal|terminal]</p>; }
             break;
-        case 'ls':
-             output = <HelpOutput />
-             if(fromClick) setView('terminal');
-             break;
+        case 'ls': output = <HelpOutput />; break;
         default:
           commandHandled = false;
-          output = <NotFoundOutput command={command} />;
-          if(fromClick) setView('terminal');
-          break;
+          output = <NotFoundOutput command={command} />; break;
       }
-
-      setActiveCommand(commandHandled ? cmd : 'not-found');
       
-      if (fromClick && cmd !== 'play') { // Play command handles its own view
-        setHistory([{ command, output }]);
-      } else {
-        setHistory(prev => {
-            const updatedHistory = [...prev];
-            updatedHistory[updatedHistory.length-1].output = output;
-            return updatedHistory;
-        });
-      }
+      if(fromClick) setView('terminal');
+      setActiveCommand(commandHandled ? cmd : 'not-found');
+
+      setHistory(prev => {
+        const newHistory = [...prev];
+        if (fromClick && cmd !== 'play') {
+            return [{ command: trimmedCommand, output }];
+        }
+        if (newHistory.length > 0) {
+            newHistory[newHistory.length - 1].output = output;
+        }
+        return newHistory;
+      });
 
       setIsProcessing(false);
     }, 300);
@@ -357,8 +328,9 @@ const App: React.FC = () => {
               <Sidebar 
                 executeCommand={executeCommand} 
                 activeCommand={activeCommand}
-                isTerminalMode={isTerminalMode}
                 onClose={closeSidebar}
+                activeGame={activeGame}
+                viewMode={viewMode}
               />
             </div>
 

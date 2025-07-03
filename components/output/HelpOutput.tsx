@@ -14,15 +14,16 @@ const commands = [
   { cmd: 'run <slug>', desc: 'Launch a live project demo (e.g., `run project-nebula`).' },
   { cmd: 'skills', desc: 'List my technical skills.' },
   { cmd: 'theme <cmd>', desc: 'Change theme. Use `theme list` or `theme set <name>`.' },
+  { cmd: 'view <cmd>', desc: 'Change view. Use `view normal` or `view terminal`.'}
 ];
 
 const HelpOutput: React.FC = () => (
   <div>
     <p className="font-bold text-[var(--text-bright)]">Available Commands:</p>
-    <ul className="mt-2 list-none space-y-1">
+    <ul className="mt-2 grid sm:grid-cols-2 gap-x-6 gap-y-1">
       {commands.sort((a, b) => a.cmd.localeCompare(b.cmd)).map(({ cmd, desc }) => (
-        <li key={cmd} className="flex flex-col sm:flex-row">
-          <span className="w-48 text-[var(--accent-cyan)] flex-shrink-0">{cmd}</span>
+        <li key={cmd}>
+          <span className="text-[var(--accent-cyan)] mr-2">{cmd}</span>
           <span className="text-[var(--text-primary)]">{desc}</span>
         </li>
       ))}

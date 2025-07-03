@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 interface CowsayOutputProps {
@@ -19,14 +20,16 @@ const CowsayOutput: React.FC<CowsayOutputProps> = ({ message }) => {
     `;
 
     return (
-        <pre className="text-[var(--text-primary)] font-mono text-sm leading-tight">
-            {top}
-            {'\n'}
-            {textLine}
-            {'\n'}
-            {bottom}
-            {cow}
-        </pre>
+        <div className="overflow-x-auto">
+            <pre className="text-[var(--text-primary)] font-mono text-sm leading-tight min-w-max">
+                {top}
+                {'\n'}
+                {textLine}
+                {'\n'}
+                {bottom}
+                {cow}
+            </pre>
+        </div>
     );
 };
 

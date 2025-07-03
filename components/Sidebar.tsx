@@ -1,15 +1,17 @@
 
 import React, { useState } from 'react';
 import { ChevronDownIcon, ChevronRightIcon, FolderIcon, FileIcon, SOCIAL_LINKS, YOUR_EMAIL, ControllerIcon } from '../constants';
+import { ViewMode } from '../types';
 
 interface SidebarProps {
   executeCommand: (command: string, fromClick: boolean) => void;
-  isTerminalMode: boolean;
   activeCommand: string;
   onClose: () => void;
+  activeGame: string | null;
+  viewMode: ViewMode;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ executeCommand, isTerminalMode, activeCommand, onClose }) => {
+const Sidebar: React.FC<SidebarProps> = ({ executeCommand, activeCommand, onClose, activeGame, viewMode }) => {
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({
     'portfolio': true,
   });
@@ -50,9 +52,13 @@ const Sidebar: React.FC<SidebarProps> = ({ executeCommand, isTerminalMode, activ
               {sections.map(section => {
                 const isActive = section.command === activeCommand;
                 return (
-                  <button
+                  <a
                     key={section.name}
-                    onClick={() => handleItemClick(section.command)}
+                    href={`#/${section.command}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleItemClick(section.command);
+                    }}
                     className={`w-full flex items-center text-left text-sm p-1 rounded transition-colors duration-150 ${
                       isActive 
                         ? 'bg-[var(--bg-tertiary)] text-[var(--text-bright)]' 
@@ -61,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ executeCommand, isTerminalMode, activ
                   >
                     <FileIcon className="w-5 h-5 mr-2 text-[var(--text-muted)]" />
                     <span>{section.name}</span>
-                  </button>
+                  </a>
                 );
               })}
             </div>
@@ -73,17 +79,21 @@ const Sidebar: React.FC<SidebarProps> = ({ executeCommand, isTerminalMode, activ
         Games
       </div>
       <nav className="space-y-1">
-         <button
-            onClick={() => handleItemClick('play tictactoe')}
+         <a
+            href="#/play/tictactoe"
+            onClick={(e) => {
+                e.preventDefault();
+                handleItemClick('play tictactoe');
+            }}
             className={`w-full flex items-center text-left text-sm p-1 rounded transition-colors duration-150 ${
-              activeCommand === 'play'
+              activeGame === 'tictactoe' && viewMode === 'game'
                 ? 'bg-[var(--bg-tertiary)] text-[var(--text-bright)]'
                 : 'text-[var(--text-secondary)] hover:text-[var(--text-bright)] hover:bg-[var(--bg-tertiary-alpha)]'
             }`}
           >
             <ControllerIcon className="w-5 h-5 mr-2 text-[var(--accent-green)]" />
             <span>tictactoe.jsx</span>
-        </button>
+        </a>
       </nav>
 
       <div className="mt-auto pt-6 border-t border-[var(--border-primary)]">
