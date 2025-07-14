@@ -145,12 +145,12 @@ export const SOCIAL_LINKS = [
   },
   {
     name: 'LinkedIn',
-    url: 'https://linkedin.com/in/your-profile',
+    url: 'https://linkedin.com/',
     Icon: LinkedinIcon,
   },
   {
     name: 'X (Twitter)',
-    url: 'https://x.com/your-profile',
+    url: 'https://x.com/techmystique_',
     Icon: TwitterIcon,
   }
 ];
